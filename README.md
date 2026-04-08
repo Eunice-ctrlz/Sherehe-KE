@@ -9,7 +9,8 @@ Finding active parties in real-time is difficult.
 
 ## Solution: Hybrid Heat Map
 1.  **Baseline Data:** Public Event APIs & Social Media Scraping (Scheduled events).
-2.  **Real-Time "Vibe" Validation:** User-initiated "Pulse" button.
+2.  **User-Generated Events:** Anyone can drop a pin and host their own party or pop-up event on the map.
+3.  **Real-Time "Vibe" Validation:** User-initiated "Pulse" button.
     -   Users confirm a party is active by "pulsing".
     -   More pulses = Brighter/Hotter glow on the map.
     -   **Privacy/Battery:** No continuous background GPS. Location is only sent when "Pulse" is tapped.
