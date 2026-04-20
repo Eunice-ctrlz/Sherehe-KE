@@ -1,0 +1,14 @@
+
+# Local documentation
+source_doc.md
+README.md
+PLANNING.md
+
+# Environments
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+
