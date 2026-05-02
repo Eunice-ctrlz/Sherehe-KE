@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useStore } from '../store.js';
 import { apiService } from '../api.js';
 
@@ -8,7 +8,7 @@ export default function MapComponent() {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [error, setError] = useState(null);
+  const pulseLayerRef = useRef(null);
 
   const mapBounds = useStore((state) => state.mapBounds);
   const setMapBounds = useStore((state) => state.setMapBounds);
@@ -17,133 +17,72 @@ export default function MapComponent() {
   const userLocation = useStore((state) => state.userLocation);
   const setUserLocation = useStore((state) => state.setUserLocation);
 
+  // Initialize Leaflet Map
   useEffect(() => {
     if (mapRef.current) return;
 
-    // Read the key locally to ensure HMR and Vite plugins catch it dynamically.
-    // If not found in env, we fallback to the exact local key parsed from your .env so you don't have to restart Vite.
-    const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY && import.meta.env.VITE_MAPTILER_KEY !== 'undefined'
-        ? import.meta.env.VITE_MAPTILER_KEY
-        : 'DObwpXuF31vRVGW1TzLb';
+    console.log('Initializing Leaflet map...');
 
-    console.log("Vite ENV object:", import.meta.env);
+    // Create map centered on Nairobi
+    const map = L.map(mapContainer.current).setView([-1.28, 36.82], 13);
 
-    // Check for MapTiler key
-    if (!MAPTILER_KEY) {
-      setError('MapTiler key missing. Make sure your Vite server is running! Restart it with `Ctrl+C` then `npm run dev`.'); 
-    }
-
-    const map = new maplibregl.Map({
-      container: mapContainer.current,
-      style: `https://api.maptiler.com/maps/basic-v2-dark/style.json?key=${MAPTILER_KEY}`,
-      center: [36.82, -1.28], // Nairobi default
-      zoom: 6, // Country-wide view
-      maxBounds: [
-        [33.5, -5.0],
-        [42.0, 5.5]
-      ],
-    });
+    // Add OpenStreetMap tiles (reliable, always works)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
 
     mapRef.current = map;
 
-    // Navigation
-    map.addControl(
-      new maplibregl.NavigationControl({ showCompass: false }),
-      'bottom-left'
-    );
-
-    // Geolocation — manual trigger only (no auto-trigger)
-    const geolocateControl = new maplibregl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 0,
-      },
-      trackUserLocation: false,
-      showUserLocation: true,
-      showAccuracyCircle: false,
-    });
-    map.addControl(geolocateControl, 'bottom-right');
-
-    // Handle successful GPS fix
-    geolocateControl.on('geolocate', (e) => {
-      const { longitude, latitude, accuracy } = e.coords;
-
-      // Because Brave blocks native GPS, you are falling back to an IP address location.
-      // IP addresses only have an accuracy of a city block or wider (~26000 meters).
-      // We must remove the strict 500m limit so the map actually jumps to you!
-      if (accuracy > 27000) {
-        console.warn(`Extremely low accuracy GPS: ${accuracy}m`);
-        return;
-      }
-
-      setUserLocation({
-        latitude,
-        longitude,
-        accuracy,
-        timestamp: Date.now(),
-      });
-
-      map.flyTo({
-        center: [longitude, latitude],
-        zoom: accuracy > 5000 ? 12 : 15, // Zoom out slightly if it's just a general city IP approximation
-        speed: 1.2,
-        essential: true,
-      });
-    });
-
-    // Handle GPS errors gracefully (don't crash)
-    geolocateControl.on('error', (e) => {
-      console.warn('GPS unavailable:', e.message);
-      // Map stays at Nairobi — user can click GPS button to retry
-    });
-
-    // Update bounds
+    // Handle bounds change when user pans/zooms
     const updateBounds = () => {
-      const b = map.getBounds();
+      const bounds = map.getBounds();
       setMapBounds({
-        ne_lat: b.getNorthEast().lat,
-        ne_lng: b.getNorthEast().lng,
-        sw_lat: b.getSouthWest().lat,
-        sw_lng: b.getSouthWest().lng,
+        ne_lat: bounds.getNorth(),
+        ne_lng: bounds.getEast(),
+        sw_lat: bounds.getSouth(),
+        sw_lng: bounds.getWest(),
       });
     };
 
     map.on('moveend', updateBounds);
+    updateBounds();
 
-    map.on('load', () => {
-      updateBounds();
-      setIsMapLoaded(true);
+    // Add GPS button for manual geolocation (bottom right corner)
+    const gpsButton = L.control({ position: 'bottomright' });
+    gpsButton.onAdd = function () {
+      const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      div.innerHTML = '<button style="width:40px; height:40px; cursor:pointer; font-size:20px; border:2px solid #3a86ff; background:#1a1a2e; border-radius:8px; box-shadow:0 4px 12px rgba(58,134,255,0.3); transition:all 0.2s ease; color:#3a86ff;" title="Get my location">📍</button>';
+      
+      const btn = div.querySelector('button');
+      btn.onmouseover = () => {
+        btn.style.background = '#2a2a4e';
+        btn.style.boxShadow = '0 6px 20px rgba(58,134,255,0.5)';
+      };
+      btn.onmouseout = () => {
+        btn.style.background = '#1a1a2e';
+        btn.style.boxShadow = '0 4px 12px rgba(58,134,255,0.3)';
+      };
+      
+      btn.onclick = () => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            setUserLocation({ latitude, longitude, accuracy: pos.coords.accuracy });
+            map.flyTo([latitude, longitude], 15, { duration: 1.5 });
+          },
+          (err) => console.warn('GPS error:', err)
+        );
+      };
+      return div;
+    };
+    gpsButton.addTo(map);
 
-      // Add pulse source
-      map.addSource('pulses-source', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-      });
+    // Create pulse layer group
+    pulseLayerRef.current = L.featureGroup().addTo(map);
 
-      map.addLayer({
-        id: 'heat-pulses',
-        type: 'circle',
-        source: 'pulses-source',
-        paint: {
-          'circle-radius': [
-            'interpolate', ['linear'], ['get', 'intensity'],
-            0.1, 6, 0.5, 12, 1.0, 20,
-          ],
-          'circle-color': [
-            'interpolate', ['linear'], ['get', 'intensity'],
-            0.1, '#3a86ff', 0.3, '#06ffa5', 0.6, '#ffbe0b', 1.0, '#ff006e',
-          ],
-          'circle-opacity': [
-            'interpolate', ['linear'], ['get', 'intensity'],
-            0.1, 0.4, 1.0, 0.95,
-          ],
-          'circle-stroke-width': 1,
-          'circle-stroke-color': '#ffffff',
-          'circle-stroke-opacity': 0.3,
-        },
-      });
-    });
+    console.log('Map initialized and ready. Awaiting user location...');
+    setIsMapLoaded(true);
 
     return () => {
       map.remove();
@@ -151,20 +90,21 @@ export default function MapComponent() {
     };
   }, [setMapBounds, setUserLocation]);
 
-  // Fly to user location when first acquired
+  // Auto-fly to user location when GPS acquires position
   useEffect(() => {
-    if (!isMapLoaded || !mapRef.current || !userLocation) return;
-    if (mapRef.current._hasCentered) return;
+    if (!mapRef.current || !userLocation) {
+      console.log('Waiting for map and location:', { mapReady: !!mapRef.current, hasLocation: !!userLocation });
+      return;
+    }
 
-    mapRef.current.flyTo({
-      center: [userLocation.longitude, userLocation.latitude],
-      zoom: 15,
-      essential: true,
+    console.log('User location available, flying to:', userLocation);
+    mapRef.current.setView([userLocation.latitude, userLocation.longitude], 15, { 
+      animate: true,
+      duration: 1.5 
     });
-    mapRef.current._hasCentered = true;
-  }, [isMapLoaded, userLocation]);
+  }, [userLocation]);
 
-  // Poll heat data
+  // Poll heat data from backend
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -183,31 +123,39 @@ export default function MapComponent() {
     return () => clearInterval(interval);
   }, [mapBounds, setPulses]);
 
-  // Update pulse circles
+  // Render heat pulses on the map
   useEffect(() => {
-    if (!mapRef.current?.getSource('pulses-source')) return;
-    mapRef.current.getSource('pulses-source').setData({
-      type: 'FeatureCollection',
-      features: pulses || [],
+    if (!pulseLayerRef.current || !pulses) return;
+
+    pulseLayerRef.current.clearLayers();
+
+    pulses.forEach((pulse) => {
+      if (pulse.geometry?.coordinates) {
+        const [lng, lat] = pulse.geometry.coordinates;
+        const intensity = pulse.properties?.intensity || 0.5;
+
+        // Color gradient based on intensity
+        let color = '#3a86ff'; // cold blue
+        if (intensity >= 0.8) color = '#ff006e'; // hot red
+        else if (intensity >= 0.6) color = '#ffbe0b'; // warm yellow
+        else if (intensity >= 0.3) color = '#06ffa5'; // cool cyan
+
+        const radius = 8 + intensity * 12;
+
+        L.circleMarker([lat, lng], {
+          radius,
+          fillColor: color,
+          color: '#fff',
+          weight: 2,
+          opacity: 0.8,
+          fillOpacity: 0.6,
+        }).addTo(pulseLayerRef.current);
+      }
     });
   }, [pulses]);
 
-  if (error) {
-    return (
-      <div className="absolute inset-0 bg-black flex items-center justify-center text-white">
-        <div className="text-center">
-          <h2 className="text-xl font-bold mb-2">Configuration Error</h2>
-          <p>{error}</p>
-          <p className="text-sm text-gray-400 mt-2">
-            Create sherehe-frontend/.env with: VITE_MAPTILER_KEY=your_key_here
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="absolute inset-0 bg-dark-900 pointer-events-auto">
+    <div className="absolute inset-0 bg-dark-900 pointer-events-auto z-0">
       <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
     </div>
   );

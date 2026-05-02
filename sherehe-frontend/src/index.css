@@ -18,3 +18,71 @@ body {
   overflow: hidden;
   position: relative;
 }
+
+/* Radar pulse animation */
+@keyframes radarPulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes radarPulse2 {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Neon glow effect */
+@keyframes neonGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(58, 134, 255, 0.3), inset 0 0 10px rgba(58, 134, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(58, 134, 255, 0.6), inset 0 0 20px rgba(58, 134, 255, 0.2);
+  }
+}
+
+/* Pulse glow effect for button */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 0, 110, 0.3), 0 0 40px rgba(255, 0, 110, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 0, 110, 0.6), 0 0 60px rgba(255, 0, 110, 0.2);
+  }
+}
+
+/* Glassmorphism effect */
+.glassmorphism {
+  background: rgba(26, 26, 46, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(58, 134, 255, 0.2);
+}
+
+/* Slow pulse for door intel modal */
+@keyframes pulseSlow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 3s ease-in-out infinite;
+}

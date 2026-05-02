@@ -10,26 +10,28 @@ export const getOrCreateDeviceId = () => {
 export const getUserLocation = () => {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
-      // Fallback to IP-based location if completely unsupported
+      console.warn('Geolocation not supported, using IP fallback');
       fetchIpLocation().then(resolve).catch(reject);
       return;
     }
 
+    console.log('Requesting GPS location with 10s timeout...');
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        resolve({
+        const loc = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy
-        });
+        };
+        console.log('GPS success:', loc);
+        resolve(loc);
       },
       (error) => {
-        console.warn("GPS geolocation failed. Falling back to IP-based location...", error);
+        console.warn("GPS failed, falling back to IP location...", error);
         fetchIpLocation().then(resolve).catch(() => reject(error));
       },
-      // Dropping HighAccuracy requirement to prevent Windows Desktop timeout from crashing Chrome/Brave.
-      // Dropping timeout to 3 seconds so IP-fallback triggers almost instantly if blocked.
-      { enableHighAccuracy: false, timeout: 3000, maximumAge: 30000 }
+      // Give GPS 10 seconds to respond, disable high accuracy for faster mobile/desktop response
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
     );
   });
 };

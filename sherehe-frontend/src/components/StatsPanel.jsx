@@ -29,29 +29,31 @@ export default function StatsPanel() {
   }, [pulses]);
 
   return (
-    <div className="absolute top-4 left-4 z-40 bg-dark-800/90 backdrop-blur-sm border border-dark-600 rounded-xl p-4 text-dark-50 shadow-lg pointer-events-auto">
-      <h2 className="text-neon-cyan font-bold tracking-wider mb-2">LIVE METRICS</h2>
-      <div className="flex gap-4 mb-4">
-        <div>
-          <div className="text-xs text-dark-400">Active Pulses</div>
-          <div className="text-xl font-mono">{stats.total}</div>
+    <div className="absolute top-4 left-4 z-40 glassmorphism rounded-2xl p-5 text-dark-50 shadow-2xl pointer-events-auto max-w-xs">
+      <h2 className="text-neon-cyan font-bold tracking-wider mb-4 text-sm uppercase">📊 Live Metrics</h2>
+      <div className="grid grid-cols-2 gap-4 mb-5">
+        <div className="bg-gradient-to-br from-dark-900/60 to-dark-800/40 rounded-lg p-3 border border-neon-cyan/20 backdrop-blur-sm">
+          <div className="text-xs text-dark-400 font-semibold mb-1">Active Pulses</div>
+          <div className="text-2xl font-mono font-bold text-neon-cyan">{stats.total}</div>
         </div>
-        <div>
-          <div className="text-xs text-dark-400">Vibe level</div>
-          <div className="text-xl font-mono text-neon-yellow">{stats.avg}%</div>
+        <div className="bg-gradient-to-br from-dark-900/60 to-dark-800/40 rounded-lg p-3 border border-neon-yellow/20 backdrop-blur-sm">
+          <div className="text-xs text-dark-400 font-semibold mb-1">Vibe Level</div>
+          <div className="text-2xl font-mono font-bold text-neon-yellow">{stats.avg}%</div>
         </div>
       </div>
       <div>
-        <div className="text-xs text-dark-400 mb-1">Top Venues</div>
+        <div className="text-xs text-dark-400 font-semibold mb-2 uppercase">🔥 Trending Venues</div>
         {stats.topVenues.length === 0 ? (
-          <div className="text-sm text-dark-500 italic">No activity locally</div>
+          <div className="text-sm text-dark-500 italic">No activity nearby</div>
         ) : (
-          stats.topVenues.map((v, idx) => (
-            <div key={idx} className="flex justify-between text-sm py-1 border-b border-dark-700 last:border-0">
-              <span className="truncate max-w-[120px]">{v.name}</span>
-              <span className="text-neon-pink font-mono text-xs">{Math.round(v.score * 100)}%</span>
-            </div>
-          ))
+          <div className="space-y-1">
+            {stats.topVenues.map((v, idx) => (
+              <div key={idx} className="flex justify-between items-center text-sm p-2 bg-dark-900/30 rounded border border-neon-pink/20 hover:border-neon-pink/50 transition-all backdrop-blur-sm">
+                <span className="truncate max-w-[120px] text-dark-200">{v.name}</span>
+                <span className="text-neon-pink font-mono text-xs font-bold ml-2 flex-shrink-0">{Math.round(v.score * 100)}%</span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

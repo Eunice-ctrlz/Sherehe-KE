@@ -28,6 +28,26 @@ export const useStore = create(
       deviceId: getOrCreateDeviceId(),
       userLocation: null,
 
+      // Navigation State
+      currentPage: 'map', // 'map' | 'vibe-feed' | 'profile'
+      showHostMode: false,
+      showDoorIntel: false,
+
+      // User Profile State
+      userProfile: {
+        tier: 'Rookie', // 'Rookie' | 'Insider' | 'Influencer'
+        totalPoints: 342,
+        pointsToNextTier: 658,
+        badges: [
+          { id: 'trendsetter', name: 'Trendsetter', icon: '🔥', unlocked: true },
+          { id: 'night_owl', name: 'Night Owl', icon: '🦉', unlocked: true },
+          { id: 'early_bird', name: 'Early Bird', icon: '🌅', unlocked: false },
+          { id: 'legend', name: 'Legend', icon: '👑', unlocked: false },
+          { id: 'explorer', name: 'Explorer', icon: '🗺️', unlocked: true },
+          { id: 'connector', name: 'Connector', icon: '🤝', unlocked: false },
+        ],
+      },
+
       // Actions
       setLoading: (bool) => set({ isLoading: bool }),
       setError: (err) => set({ error: err }),
@@ -51,6 +71,47 @@ export const useStore = create(
           lastPulseTime: now,
           nextPulseAvailable: availableAt,
           isPulsing: false 
+        });
+      },
+
+      // Navigation Actions
+      setCurrentPage: (page) => set({ currentPage: page }),
+      setShowHostMode: (bool) => set({ showHostMode: bool }),
+      setShowDoorIntel: (bool) => set({ showDoorIntel: bool }),
+
+      // Profile Actions
+      addPulsePoints: (points) => {
+        const { userProfile } = get();
+        const newPoints = userProfile.totalPoints + points;
+        const newPointsToNextTier = Math.max(0, userProfile.pointsToNextTier - points);
+        
+        // Check tier progression
+        let tier = userProfile.tier;
+        if (newPointsToNextTier <= 0 && tier === 'Rookie') {
+          tier = 'Insider';
+        } else if (newPointsToNextTier <= 0 && tier === 'Insider') {
+          tier = 'Influencer';
+        }
+
+        set({
+          userProfile: {
+            ...userProfile,
+            totalPoints: newPoints,
+            pointsToNextTier: Math.max(0, newPointsToNextTier),
+            tier,
+          },
+        });
+      },
+
+      unlockBadge: (badgeId) => {
+        const { userProfile } = get();
+        set({
+          userProfile: {
+            ...userProfile,
+            badges: userProfile.badges.map((b) =>
+              b.id === badgeId ? { ...b, unlocked: true } : b
+            ),
+          },
         });
       },
     }),
