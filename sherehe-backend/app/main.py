@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncio
 import os
@@ -37,6 +38,14 @@ async def lifespan(app: FastAPI):
     await r.close()
 
 app = FastAPI(title='Sherehe KE API', lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include our API routers
 app.include_router(user.router)
