@@ -32,10 +32,5 @@ env.*
 # DOCUMENTATION
 PLANNING.md - project roadmap, architecture decisions, and design docs.
 
-docker-compose.override.yml
-docker-compose.dev.yml
-docker-compose.prod.yml
-docker-compose.staging.yml
-docker-compose.local.yml
-docker-compose.*.yml
-
+# SCRAPERS
+sherehe-scraper/

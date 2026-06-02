@@ -16,7 +16,7 @@ from config import TWITTER_HASHTAGS, TWITTER_KEYWORDS, SETTINGS
 async def scrape_twitter():
     """Scrape Twitter/X via Nitter."""
     print(f"\n{'='*60}")
-    print("🐦 Twitter/X: Starting async scrape...")
+    print("Twitter/X: Starting async scrape...")
     print(f"{'='*60}")
     
     async with NitterScraper() as scraper:
@@ -24,7 +24,7 @@ async def scrape_twitter():
         working = await scraper.health_check()
         
         if not working:
-            print("⚠️  No working Nitter instances. Skipping Twitter.")
+            print("No working Nitter instances. Skipping Twitter.")
             return []
         
         # Search hashtags in parallel (async)
@@ -78,7 +78,7 @@ def build_heat_map(all_posts):
     processor.save_heat_map("data/heat_map.json")
     
     # Summary
-    print(f"\n📊 RESULTS:")
+    print(f"\nRESULTS:")
     print(f"   Total posts: {len(all_posts)}")
     print(f"   Active venues: {len(heat_data['venues'])}")
     
@@ -93,7 +93,7 @@ def build_heat_map(all_posts):
 async def main():
     """Main orchestrator."""
     print(f"\n{'='*60}")
-    print(f"🚀 Sherehe-KE Scraper | {datetime.now()}")
+    print(f"Sherehe-KE Scraper | {datetime.now()}")
     print(f"   Async Twitter via Nitter + Heat Map")
     print(f"{'='*60}")
     
@@ -111,10 +111,10 @@ async def main():
     if all_posts:
         heat_map = build_heat_map(all_posts)
     else:
-        print("\n⚠️  No posts scraped. Heat map empty.")
+        print("\n No posts scraped. Heat map empty.")
     
     print(f"\n{'='*60}")
-    print("✅ Scrape complete!")
+    print("Scrape complete!")
     print(f"{'='*60}")
 
 
